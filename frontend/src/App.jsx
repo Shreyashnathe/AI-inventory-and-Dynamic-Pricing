@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KpiSummary from './components/KpiSummary';
+import AnalyticsSection from './components/AnalyticsSection';
 import ApprovalQueue from './components/ApprovalQueue';
 import CatalogTable from './components/CatalogTable';
 import StreamModal from './components/StreamModal';
@@ -8,6 +10,8 @@ import StockUpdateModal from './components/StockUpdateModal';
 import './App.css';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [pricingSuggestions, setPricingSuggestions] = useState([]);
   const [reorderSuggestions, setReorderSuggestions] = useState([]);
@@ -40,7 +44,7 @@ export default function App() {
       if (stratRes.ok) setStrategy(await stratRes.json());
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      if (!isSilent) showToast('Could not connect to backend engine. Ensure Spring Boot is running on port 8080.', 'error');
+      if (!isSilent) showToast('Could not connect to backend engine on port 8080.', 'error');
     } finally {
       if (!isSilent) setLoading(false);
     }
@@ -48,10 +52,10 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    // Auto-poll every 3.5s to display async agentic recommendations live
+    // Auto-poll every 3 seconds to surface asynchronous agentic loop updates
     const interval = setInterval(() => {
       fetchData(true);
-    }, 3500);
+    }, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -67,7 +71,7 @@ export default function App() {
       if (res.ok) {
         const updated = await res.json();
         setStrategy(updated);
-        showToast(`Commerce strategy switched to ${updated.mode} at runtime!`, 'success');
+        showToast(`Strategy switched to ${updated.mode} (Zero-downtime hot swap)!`, 'success');
       }
     } catch (err) {
       showToast('Failed to switch strategy mode', 'error');
@@ -87,7 +91,7 @@ export default function App() {
     }
   };
 
-  // Simulate Sale (-1 Stock, +1 Velocity)
+  // Simulate Sale (-1 Stock, +1 Velocity) -> Triggers Agentic Loop
   const handleSimulateSale = async (productId) => {
     setActionLoading(productId);
     try {
@@ -98,76 +102,38 @@ export default function App() {
       });
       if (res.ok) {
         showToast('Simulated sale recorded. Asynchronous agentic loop activated!', 'info');
-        // Refresh shortly after to catch async event queue
-        setTimeout(() => fetchData(true), 1200);
+        setTimeout(() => fetchData(true), 800);
       }
     } catch (err) {
-      showToast('Sale simulation failed', 'error');
+      showToast('Failed to simulate order', 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Simulate Viral Surge (+5 Orders)
+  // Simulate Viral Surge (+20 Velocity) -> Triggers Demand Spike
   const handleSimulateSurge = async (productId) => {
     setActionLoading(productId);
     try {
       const res = await fetch(`/api/products/${productId}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: 5 })
+        body: JSON.stringify({ quantity: 20 })
       });
       if (res.ok) {
-        showToast('Viral surge (+5 orders) simulated! Demand spike trigger evaluated.', 'info');
-        setTimeout(() => fetchData(true), 1200);
+        showToast('Demand Surge triggered! Agentic loop queuing DEMAND_SPIKE recommendations...', 'info');
+        setTimeout(() => fetchData(true), 800);
       }
     } catch (err) {
-      showToast('Surge simulation failed', 'error');
+      showToast('Failed to simulate surge', 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Update Stock directly
-  const handleUpdateStock = async (productId, newStock) => {
-    setActionLoading(productId);
-    try {
-      const res = await fetch(`/api/products/${productId}/stock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stockLevel: newStock })
-      });
-      if (res.ok) {
-        showToast(`Stock updated to ${newStock} units. Signal event emitted.`, 'info');
-        setStockModalProduct(null);
-        setTimeout(() => fetchData(true), 1200);
-      }
-    } catch (err) {
-      showToast('Failed to update stock', 'error');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // On-demand AI pricing
-  const handleSuggestPricing = async (productId) => {
-    setActionLoading(productId);
-    try {
-      const res = await fetch(`/api/products/${productId}/suggest-pricing`, { method: 'POST' });
-      if (res.ok) {
-        showToast('On-demand pricing analysis generated and queued.', 'success');
-        fetchData(true);
-      }
-    } catch (err) {
-      showToast('Pricing suggestion failed', 'error');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Action Pricing (ACCEPT / REJECT)
+  // Accept/Reject Pricing Suggestion
   const handleActionPricing = async (suggestionId, status) => {
-    setActionLoading(suggestionId);
+    setActionLoading(`price-${suggestionId}`);
     try {
       const res = await fetch(`/api/pricing-suggestions/${suggestionId}`, {
         method: 'PATCH',
@@ -175,19 +141,19 @@ export default function App() {
         body: JSON.stringify({ status })
       });
       if (res.ok) {
-        showToast(`Pricing suggestion ${status}! Catalog updated.`, 'success');
+        showToast(`Pricing suggestion ${status.toLowerCase()}! Live catalog updated.`, 'success');
         fetchData(true);
       }
     } catch (err) {
-      showToast('Action failed', 'error');
+      showToast(`Failed to ${status.toLowerCase()} pricing suggestion`, 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Action Reorder (ACCEPT / REJECT)
+  // Accept/Reject Reorder Suggestion
   const handleActionReorder = async (suggestionId, status) => {
-    setActionLoading(suggestionId);
+    setActionLoading(`reorder-${suggestionId}`);
     try {
       const res = await fetch(`/api/reorder-suggestions/${suggestionId}`, {
         method: 'PATCH',
@@ -195,102 +161,198 @@ export default function App() {
         body: JSON.stringify({ status })
       });
       if (res.ok) {
-        showToast(
-          status === 'ACCEPTED'
-            ? 'Reorder approved! Inbound replenishment added to stock.'
-            : 'Reorder suggestion rejected.',
-          'success'
-        );
+        showToast(`Reorder suggestion ${status.toLowerCase()}! Simulated inbound stock received.`, 'success');
         fetchData(true);
       }
     } catch (err) {
-      showToast('Action failed', 'error');
+      showToast(`Failed to ${status.toLowerCase()} reorder suggestion`, 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
+  // Manual On-demand Pricing trigger
+  const handleSuggestPricing = async (productId) => {
+    setActionLoading(`suggest-price-${productId}`);
+    try {
+      const res = await fetch(`/api/products/${productId}/suggest-pricing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggerReason: 'MANUAL' })
+      });
+      if (res.ok) {
+        showToast('AI Pricing Recommendation generated and queued!', 'success');
+        fetchData(true);
+      }
+    } catch (err) {
+      showToast('Failed to generate pricing recommendation', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Manual On-demand Reorder trigger
+  const handleSuggestReorder = async (productId) => {
+    setActionLoading(`suggest-reorder-${productId}`);
+    try {
+      const res = await fetch(`/api/products/${productId}/suggest-reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggerReason: 'MANUAL' })
+      });
+      if (res.ok) {
+        showToast('AI Replenishment Recommendation generated and queued!', 'success');
+        fetchData(true);
+      }
+    } catch (err) {
+      showToast('Failed to generate reorder recommendation', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Direct Stock Patch
+  const handleStockUpdateSave = async (productId, newStock) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/stock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newStock })
+      });
+      if (res.ok) {
+        showToast(`Stock level adjusted to ${newStock}. Inventory signals processed.`, 'success');
+        setStockModalProduct(null);
+        setTimeout(() => fetchData(true), 600);
+      }
+    } catch (err) {
+      showToast('Failed to update stock', 'error');
+    }
+  };
+
+  const pendingPricing = pricingSuggestions.filter((s) => s.status === 'PENDING');
+  const pendingReorder = reorderSuggestions.filter((s) => s.status === 'PENDING');
+  const pendingTotal = pendingPricing.length + pendingReorder.length;
+
+  // Filter products by search query
+  const rawProductList = products.map((item) => item.product || item);
+  const filteredProducts = products.filter((item) => {
+    const p = item.product || item;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <div className="app-container">
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            padding: '12px 20px',
-            borderRadius: 'var(--radius-md)',
-            background: toast.type === 'error' ? 'var(--accent-rose)' : 'var(--bg-card)',
-            color: '#fff',
-            border: '1px solid var(--border-highlight)',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-            zIndex: 9999,
-            fontSize: '13px',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-          className="animate-fade-in"
-        >
-          {toast.message}
-        </div>
-      )}
-
-      {/* Header */}
-      <Header
-        strategy={strategy}
-        onToggleStrategy={handleToggleStrategy}
-        onResetData={handleResetData}
-        onRefresh={() => fetchData(false)}
-        loading={loading}
+    <div className="devias-app-layout">
+      {/* 1. LEFT SIDEBAR */}
+      <Sidebar 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        pendingCount={pendingTotal}
+        strategyMode={strategy?.mode}
       />
 
-      {/* KPI Metrics Strip */}
-      <KpiSummary
-        products={products}
-        pricingSuggestions={pricingSuggestions}
-        reorderSuggestions={reorderSuggestions}
-      />
+      {/* 2. MAIN CONTAINER */}
+      <div className="devias-main-container">
+        {/* Top Header */}
+        <Header 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          strategy={strategy}
+          onToggleStrategy={handleToggleStrategy}
+          onResetData={handleResetData}
+          pendingCount={pendingTotal}
+        />
 
-      {/* Approval Queue (T-5 Floor requirement) */}
-      <ApprovalQueue
-        pricingSuggestions={pricingSuggestions}
-        reorderSuggestions={reorderSuggestions}
-        onActionPricing={handleActionPricing}
-        onActionReorder={handleActionReorder}
-        actionLoading={actionLoading}
-      />
+        {/* Content Body */}
+        <main className="devias-content-body">
+          {/* Top 4 KPI Metric Cards (Always visible on Overview, Analytics) */}
+          {(activeTab === 'overview' || activeTab === 'analytics') && (
+            <KpiSummary 
+              products={rawProductList} 
+              pendingCount={pendingTotal} 
+            />
+          )}
 
-      {/* Product Catalog Matrix (T-5 Ceiling requirement) */}
-      <CatalogTable
-        products={products}
-        onSimulateSale={handleSimulateSale}
-        onSimulateSurge={handleSimulateSurge}
-        onOpenStockModal={(prod) => setStockModalProduct(prod)}
-        onSuggestPricing={handleSuggestPricing}
-        onOpenStreamModal={(prod) => setStreamProduct(prod)}
-        actionLoading={actionLoading}
-      />
+          {/* Analytics Visualizations (Sales Bar Chart & Traffic Donut) */}
+          {(activeTab === 'overview' || activeTab === 'analytics') && (
+            <AnalyticsSection onSync={() => fetchData(true)} />
+          )}
 
-      {/* Stream AI Reasoning Modal (Bonus +5 pts) */}
+          {/* Approval Queue (Action Center) */}
+          {(activeTab === 'overview' || activeTab === 'approvals') && (
+            <ApprovalQueue 
+              pricingSuggestions={pricingSuggestions}
+              reorderSuggestions={reorderSuggestions}
+              onActionPricing={handleActionPricing}
+              onActionReorder={handleActionReorder}
+              actionLoading={actionLoading}
+            />
+          )}
+
+          {/* Catalog Matrix */}
+          {(activeTab === 'overview' || activeTab === 'catalog') && (
+            <CatalogTable 
+              products={filteredProducts}
+              onSimulateSale={handleSimulateSale}
+              onSimulateSurge={handleSimulateSurge}
+              onOpenStockModal={(prod) => setStockModalProduct(prod)}
+              onSuggestPricing={handleSuggestPricing}
+              onSuggestReorder={handleSuggestReorder}
+              onOpenStreamModal={(prod) => setStreamProduct(prod)}
+              actionLoading={actionLoading}
+            />
+          )}
+
+          {/* Strategy Engine Tab Details */}
+          {activeTab === 'strategy' && (
+            <div className="catalog-panel" style={{ padding: '32px' }}>
+              <h2 className="section-main-title" style={{ marginBottom: '12px' }}>
+                Pluggable Commerce Engine Settings
+              </h2>
+              <p style={{ color: 'var(--text-body)', fontSize: '14px', marginBottom: '24px' }}>
+                Active Mode: <strong>{strategy?.mode}</strong> — Switchable dynamically at runtime without restarting the container.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div style={{ padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #eaecf0' }}>
+                  <h4 style={{ fontWeight: 700, marginBottom: '8px' }}>Active Pricing Strategy</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>{strategy?.activePricingStrategy}</p>
+                </div>
+                <div style={{ padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #eaecf0' }}>
+                  <h4 style={{ fontWeight: 700, marginBottom: '8px' }}>Active Replenishment Strategy</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-body)' }}>{strategy?.activeReorderStrategy}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Interactive Modals */}
       {streamProduct && (
-        <StreamModal
-          product={streamProduct}
-          onClose={() => setStreamProduct(null)}
-          onStreamComplete={() => fetchData(true)}
+        <StreamModal 
+          product={streamProduct} 
+          onClose={() => setStreamProduct(null)} 
         />
       )}
 
-      {/* Stock Update Dialog */}
       {stockModalProduct && (
-        <StockUpdateModal
-          product={stockModalProduct}
+        <StockUpdateModal 
+          product={stockModalProduct} 
           onClose={() => setStockModalProduct(null)}
-          onUpdateStock={handleUpdateStock}
-          loading={actionLoading === stockModalProduct.id}
+          onSave={handleStockUpdateSave}
         />
+      )}
+
+      {/* Toast Feedback */}
+      {toast && (
+        <div className={`devias-toast ${toast.type} animate-fade-in`}>
+          <span>{toast.message}</span>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,1 @@
+// Types directory - will hold TypeScript type definitions

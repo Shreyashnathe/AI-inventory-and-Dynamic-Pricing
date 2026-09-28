@@ -1,65 +1,96 @@
 import React from 'react';
-import { Cpu, RefreshCw, RotateCcw, Zap, Sliders } from 'lucide-react';
+import { 
+  Search, 
+  Users, 
+  Bell, 
+  RotateCcw, 
+  Zap, 
+  ShieldCheck, 
+  Sparkles,
+  SlidersHorizontal
+} from 'lucide-react';
 
-export default function Header({ strategy, onToggleStrategy, onResetData, onRefresh, loading }) {
+export default function Header({ 
+  searchQuery, 
+  setSearchQuery, 
+  strategy, 
+  onToggleStrategy, 
+  onResetData, 
+  pendingCount = 0 
+}) {
   const isAi = strategy?.mode === 'AI_POWERED';
 
   return (
-    <header className="app-header">
-      <div className="brand-section">
-        <div className="brand-logo">
-          <Zap size={24} color="#fff" />
-        </div>
-        <div>
-          <div className="brand-title">
-            StockPulse
-            <span className="brand-badge">Agentic Engine</span>
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-            Autonomous Inventory Signal & Dynamic Pricing Advisor
-          </div>
-        </div>
+    <header className="devias-header">
+      {/* Search Input Bar */}
+      <div className="header-search-wrap">
+        <Search size={18} className="search-icon" />
+        <input 
+          type="text"
+          className="search-input"
+          placeholder="Search products, SKUs, categories, or triggers..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
+      {/* Right Header Actions */}
       <div className="header-actions">
-        {/* Runtime Strategy Switcher */}
-        <div className="strategy-toggle-card">
-          <Sliders size={18} color="var(--accent-cyan)" />
-          <div className="strategy-info">
-            <span className="strategy-label">Active Engine</span>
-            <span className="strategy-name">
-              {isAi ? '⚡ AI-Powered (Qwen-Cursor)' : '⚙️ Rule-Based (Deterministic)'}
-            </span>
-          </div>
-          <button
-            className="strategy-btn"
-            onClick={onToggleStrategy}
-            title="Switch commerce strategy at runtime without server restart"
-          >
-            Switch to {isAi ? 'Rule-Based' : 'AI Advisor'}
+        {/* Strategy Switcher Button (Live Runtime Switching) */}
+        <button 
+          className={`strategy-toggle-pill ${isAi ? 'ai-active' : 'rules-active'}`}
+          onClick={onToggleStrategy}
+          title="Click to toggle between AI-Powered and Rule-Based engine without restart"
+        >
+          {isAi ? (
+            <>
+              <Sparkles size={14} className="strategy-icon animate-pulse" />
+              <span className="strategy-text">AI Powered (Qwen)</span>
+            </>
+          ) : (
+            <>
+              <ShieldCheck size={14} className="strategy-icon" />
+              <span className="strategy-text">Rule-Based Fallback</span>
+            </>
+          )}
+          <span className="switch-hint">Switch</span>
+        </button>
+
+        {/* Database Benchmark Reset */}
+        <button 
+          className="header-icon-button"
+          onClick={onResetData}
+          title="Reset database to Addendum A benchmark state"
+        >
+          <RotateCcw size={18} />
+        </button>
+
+        {/* Collaborators / Team Icon from Devias Kit */}
+        <button className="header-icon-button" title="Merchandising Team Active (Solo Mode)">
+          <Users size={18} />
+        </button>
+
+        {/* Notification Bell with Badge */}
+        <div className="notification-bell-container">
+          <button className="header-icon-button" title="Pending Recommendations">
+            <Bell size={18} />
+            {pendingCount > 0 && (
+              <span className="bell-badge">{pendingCount}</span>
+            )}
           </button>
         </div>
 
-        {/* Reset Benchmark Button */}
-        <button
-          className="btn-secondary"
-          onClick={onResetData}
-          title="Reset database to Addendum A canonical seed data"
-        >
-          <RotateCcw size={15} />
-          Reset Demo Data
-        </button>
-
-        {/* Refresh Button */}
-        <button
-          className="btn-secondary"
-          onClick={onRefresh}
-          disabled={loading}
-          title="Refresh catalog and pending suggestions"
-        >
-          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-          Sync
-        </button>
+        {/* User Profile Avatar with Online Dot from Devias Kit */}
+        <div className="user-profile-menu">
+          <div className="avatar-wrapper">
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80" 
+              alt="Merchandising Manager" 
+              className="user-avatar"
+            />
+            <span className="avatar-online-dot"></span>
+          </div>
+        </div>
       </div>
     </header>
   );
