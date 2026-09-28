@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Flame, SlidersHorizontal, Sparkles, RefreshCw, Radio } from 'lucide-react';
+import { 
+  ShoppingCart, 
+  Flame, 
+  Sparkles, 
+  SlidersHorizontal, 
+  AlertTriangle, 
+  CheckCircle2, 
+  XCircle,
+  Clock,
+  Layers,
+  Search,
+  Filter,
+  ArrowUpRight,
+  TrendingUp,
+  Cpu,
+  Shirt,
+  Home as HomeIcon,
+  Tag
+} from 'lucide-react';
 
 export default function CatalogTable({
   products,
@@ -13,238 +31,361 @@ export default function CatalogTable({
 }) {
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [tableSearch, setTableSearch] = useState('');
 
+  // Extract raw products
+  const rawList = products.map((item) => item.product || item);
+
+  // Compute catalog summary counts
+  const totalCount = products.length;
+  const lowCount = products.filter(item => {
+    const p = item.product || item;
+    return (p.stockLevel || 0) > 0 && (p.stockLevel || 0) < (p.reorderThreshold || 0);
+  }).length;
+  const outCount = products.filter(item => {
+    const p = item.product || item;
+    return (p.stockLevel || 0) === 0;
+  }).length;
+  const pendingCount = products.filter(item => {
+    const p = item.product || item;
+    return p.status === 'PRICE_REVIEW_PENDING';
+  }).length;
+  const healthyCount = totalCount - lowCount - outCount;
+
+  // Filter products
   const filteredProducts = products.filter((item) => {
-    const p = item.product;
+    const p = item.product || item;
     const matchesCat = categoryFilter === 'ALL' || p.category === categoryFilter;
-    const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
-    return matchesCat && matchesStatus;
+    
+    let matchesStatus = true;
+    if (statusFilter === 'LOW_STOCK') {
+      matchesStatus = (p.stockLevel || 0) > 0 && (p.stockLevel || 0) < (p.reorderThreshold || 0);
+    } else if (statusFilter === 'OUT_OF_STOCK') {
+      matchesStatus = (p.stockLevel || 0) === 0;
+    } else if (statusFilter === 'PENDING') {
+      matchesStatus = p.status === 'PRICE_REVIEW_PENDING';
+    } else if (statusFilter === 'ACTIVE') {
+      matchesStatus = p.status === 'ACTIVE';
+    }
+
+    let matchesSearch = true;
+    if (tableSearch.trim()) {
+      const q = tableSearch.toLowerCase();
+      matchesSearch = (
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.id?.toLowerCase().includes(q)
+      );
+    }
+
+    return matchesCat && matchesStatus && matchesSearch;
   });
+
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'ELECTRONICS':
+        return <Cpu size={16} className="cat-icon elec" />;
+      case 'APPAREL':
+        return <Shirt size={16} className="cat-icon app" />;
+      case 'HOME':
+        return <HomeIcon size={16} className="cat-icon home" />;
+      default:
+        return <Tag size={16} className="cat-icon" />;
+    }
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return <span className="status-badge active">Active</span>;
+        return (
+          <span className="status-pill active">
+            <span className="pill-dot green"></span> Active
+          </span>
+        );
       case 'PRICE_REVIEW_PENDING':
-        return <span className="status-badge pending">Review Pending</span>;
+        return (
+          <span className="status-pill pending animate-pulse" title="AI recommendation queued in approval queue">
+            <Clock size={12} /> Review Pending
+          </span>
+        );
       case 'OUT_OF_STOCK':
-        return <span className="status-badge outofstock">Out of Stock</span>;
+        return (
+          <span className="status-pill out">
+            <span className="pill-dot red"></span> Out of Stock
+          </span>
+        );
       default:
-        return <span className="status-badge">{status}</span>;
+        return <span className="status-pill">{status}</span>;
     }
   };
 
   return (
     <div className="catalog-panel">
-      <div className="catalog-toolbar">
-        <div>
-          <h2 className="section-title">ShopStream Catalog & Inventory Health</h2>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Real-time stock velocity, category margins, and agentic simulation controls
-          </span>
+      {/* 1. Header with Catalog Summary KPI Badges */}
+      <div className="catalog-header-top">
+        <div className="catalog-title-block">
+          <div className="title-with-pill">
+            <h2 className="catalog-main-title">ShopStream Catalog &amp; Inventory Health</h2>
+            <span className="benchmark-pill">Addendum A Seed · 8 SKUs</span>
+          </div>
+          <p className="catalog-sub-text">
+            Autonomous monitoring of inventory levels, demand velocity, margin floors, and agentic triggers.
+          </p>
         </div>
 
-        <div className="filter-group">
-          {/* Category Filter */}
-          <button
-            className={`filter-pill ${categoryFilter === 'ALL' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('ALL')}
-          >
-            All Categories
-          </button>
-          <button
-            className={`filter-pill ${categoryFilter === 'ELECTRONICS' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('ELECTRONICS')}
-          >
-            Electronics
-          </button>
-          <button
-            className={`filter-pill ${categoryFilter === 'APPAREL' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('APPAREL')}
-          >
-            Apparel
-          </button>
-          <button
-            className={`filter-pill ${categoryFilter === 'HOME' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('HOME')}
-          >
-            Home
-          </button>
-
-          <span style={{ color: 'var(--border-highlight)', margin: '0 4px' }}>|</span>
-
-          {/* Status Filter */}
-          <button
-            className={`filter-pill ${statusFilter === 'ALL' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('ALL')}
-          >
-            All Status
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === 'PRICE_REVIEW_PENDING' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('PRICE_REVIEW_PENDING')}
-          >
-            Review Pending
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === 'OUT_OF_STOCK' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('OUT_OF_STOCK')}
-          >
-            Out of Stock
-          </button>
+        {/* Quick Stock Health Summary Badges */}
+        <div className="catalog-quick-stats">
+          <div className="quick-stat-badge healthy" title="Stock at or above reorder threshold">
+            <CheckCircle2 size={14} />
+            <span>{healthyCount} Healthy</span>
+          </div>
+          <div className="quick-stat-badge low" title="Stock below reorder threshold (Triggers loop)">
+            <AlertTriangle size={14} />
+            <span>{lowCount} Low Stock Alert</span>
+          </div>
+          <div className="quick-stat-badge out" title="Zero units in stock">
+            <XCircle size={14} />
+            <span>{outCount} Out of Stock</span>
+          </div>
+          {pendingCount > 0 && (
+            <div className="quick-stat-badge pending" title="AI pricing or reorder review pending">
+              <Clock size={14} />
+              <span>{pendingCount} Review Pending</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="table-wrapper">
-        <table className="custom-table">
+      {/* 2. Filter & Search Toolbar */}
+      <div className="catalog-toolbar">
+        {/* Category Filter Pills */}
+        <div className="filter-group">
+          <span className="filter-label"><Filter size={13} /> Category:</span>
+          {['ALL', 'ELECTRONICS', 'APPAREL', 'HOME'].map((cat) => (
+            <button
+              key={cat}
+              className={`filter-pill ${categoryFilter === cat ? 'active' : ''}`}
+              onClick={() => setCategoryFilter(cat)}
+            >
+              {cat === 'ALL' ? 'All Categories' : cat.charAt(0) + cat.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Filter Pills */}
+        <div className="filter-group">
+          <span className="filter-label">Health:</span>
+          {[
+            { id: 'ALL', label: 'All' },
+            { id: 'LOW_STOCK', label: 'Low Alert (< Thresh)' },
+            { id: 'PENDING', label: 'Review Pending' },
+            { id: 'OUT_OF_STOCK', label: 'Depleted' }
+          ].map((st) => (
+            <button
+              key={st.id}
+              className={`filter-pill ${statusFilter === st.id ? 'active' : ''}`}
+              onClick={() => setStatusFilter(st.id)}
+            >
+              {st.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Quick Filter Search */}
+        <div className="table-quick-search">
+          <Search size={14} className="search-icon-sm" />
+          <input 
+            type="text"
+            placeholder="Filter table rows..."
+            value={tableSearch}
+            onChange={(e) => setTableSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 3. Catalog Data Table */}
+      <div className="table-responsive-wrapper">
+        <table className="catalog-table">
           <thead>
             <tr>
-              <th>Product / SKU</th>
+              <th>Product &amp; SKU</th>
               <th>Category</th>
-              <th>Current Price</th>
-              <th>Cost / Margin Floor</th>
-              <th>Stock Depth</th>
-              <th>24h Velocity</th>
+              <th>Current Price &amp; Margin</th>
+              <th>Stock Level &amp; Health</th>
+              <th>Demand Velocity</th>
               <th>Lifecycle</th>
-              <th style={{ textAlign: 'right' }}>Agentic Simulation & Actions</th>
+              <th style={{ textAlign: 'right' }}>Agentic Simulation &amp; AI Controls</th>
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map((item) => {
-              const p = item.product;
-              const ratio = p.stockLevel / p.reorderThreshold;
-              const isLow = p.stockLevel < p.reorderThreshold;
-              const isOut = p.stockLevel === 0;
-              const isSurge = item.categoryAvgVelocity > 0 && p.demandVelocity >= (item.categoryAvgVelocity * 3.0);
+            {filteredProducts.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No products found matching the selected filters.
+                </td>
+              </tr>
+            ) : (
+              filteredProducts.map((item) => {
+                const p = item.product || item;
+                const isLow = (p.stockLevel || 0) < (p.reorderThreshold || 0) && (p.stockLevel || 0) > 0;
+                const isOut = (p.stockLevel || 0) === 0;
+                const isSurge = item.categoryAvgVelocity > 0 && (p.demandVelocity || 0) >= (item.categoryAvgVelocity * 3.0);
 
-              let stockClass = 'healthy';
-              if (isOut) stockClass = 'critical';
-              else if (isLow) stockClass = 'low';
+                let stockClass = 'healthy';
+                if (isOut) stockClass = 'critical';
+                else if (isLow) stockClass = 'low';
 
-              const barPercent = Math.min(100, Math.round((p.stockLevel / (p.reorderThreshold * 2.5)) * 100));
+                const maxScale = Math.max(100, (p.reorderThreshold || 20) * 3);
+                const barPercent = Math.min(100, Math.round(((p.stockLevel || 0) / maxScale) * 100));
 
-              return (
-                <tr key={p.id}>
-                  <td>
-                    <div className="table-name">{p.name}</div>
-                    <div className="table-sku">{p.sku} · ID: {p.id}</div>
-                  </td>
-
-                  <td>
-                    <span className="table-category-tag">{p.category}</span>
-                  </td>
-
-                  <td>
-                    <span className="price-cell">${p.currentPrice.toFixed(2)}</span>
-                  </td>
-
-                  <td>
-                    {p.costPrice ? (
-                      <div style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>Cost: ${p.costPrice.toFixed(2)}</span>
-                        <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>
-                          Floor: ${p.marginFloor ? p.marginFloor.toFixed(2) : 'N/A'}
+                return (
+                  <tr key={p.id} className={`table-row ${isLow ? 'row-low-alert' : ''}`}>
+                    {/* 1. Product & SKU */}
+                    <td>
+                      <div className="product-cell-container">
+                        <div className="category-icon-box">
+                          {getCategoryIcon(p.category)}
+                        </div>
+                        <div className="product-names">
+                          <span className="table-name">{p.name}</span>
+                          <div className="sku-id-row">
+                            <span className="table-sku">{p.sku}</span>
+                            <span className="sku-sep">·</span>
+                            <span className="table-id">{p.id}</span>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Sprint 2 Seam</span>
-                    )}
-                  </td>
+                    </td>
 
-                  <td className="stock-meter-cell">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span style={{ fontWeight: 600, color: isOut ? 'var(--accent-rose)' : isLow ? 'var(--accent-amber)' : 'inherit' }}>
-                        {p.stockLevel} units
+                    {/* 2. Category Badge */}
+                    <td>
+                      <span className={`table-category-tag ${p.category?.toLowerCase()}`}>
+                        {p.category}
                       </span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
-                        Thresh: {p.reorderThreshold}
-                      </span>
-                    </div>
-                    <div className="stock-bar-wrap">
-                      <div
-                        className={`stock-bar ${stockClass}`}
-                        style={{ width: `${barPercent}%` }}
-                      ></div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td>
-                    <div className={`velocity-badge ${isSurge ? 'surge' : ''}`}>
-                      {isSurge ? <Flame size={14} color="var(--accent-purple)" /> : null}
-                      {p.demandVelocity} orders
-                    </div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                      Cat Avg: {item.categoryAvgVelocity ? item.categoryAvgVelocity.toFixed(1) : '0.0'}
-                    </div>
-                  </td>
+                    {/* 3. Price & Margin Floors (Sprint 2 Extension Seam) */}
+                    <td>
+                      <div className="price-margin-cell">
+                        <span className="price-cell">${(p.currentPrice || 0).toFixed(2)}</span>
+                        {p.costPrice ? (
+                          <div className="margin-seam-info" title="Sprint 2 Margin Guardrail: Price cannot drop below floor">
+                            <span>Cost: ${(p.costPrice || 0).toFixed(2)}</span>
+                            <span className="floor-tag">Floor: ${(p.marginFloor || 0).toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <span className="margin-seam-info empty">Margin Floor: Configured</span>
+                        )}
+                      </div>
+                    </td>
 
-                  <td>
-                    {getStatusBadge(p.status)}
-                  </td>
+                    {/* 4. Stock Level & Visual Meter */}
+                    <td className="stock-meter-cell">
+                      <div className="stock-label-row">
+                        <span className={`stock-count ${isOut ? 'text-red' : isLow ? 'text-amber' : 'text-green'}`}>
+                          {p.stockLevel} units
+                        </span>
+                        <span className="stock-threshold-label">
+                          Threshold: {p.reorderThreshold}
+                        </span>
+                      </div>
+                      <div className="stock-bar-wrap">
+                        <div
+                          className={`stock-bar ${stockClass}`}
+                          style={{ width: `${barPercent}%` }}
+                        ></div>
+                      </div>
+                      <div className="stock-health-text">
+                        {isOut ? (
+                          <span className="health-tag out"><XCircle size={10} /> Out of Stock</span>
+                        ) : isLow ? (
+                          <span className="health-tag low"><AlertTriangle size={10} /> Low Stock Alert</span>
+                        ) : (
+                          <span className="health-tag healthy"><CheckCircle2 size={10} /> In Stock</span>
+                        )}
+                      </div>
+                    </td>
 
-                  <td style={{ textAlign: 'right' }}>
-                    <div className="action-btn-row" style={{ justifyContent: 'flex-end' }}>
-                      {/* Simulate Sale Button */}
-                      <button
-                        className="action-icon-btn primary"
-                        onClick={() => onSimulateSale(p.id)}
-                        disabled={actionLoading === p.id}
-                        title="Simulate 1 order (decrements stock, bumps velocity; auto-fires loop if below threshold)"
-                      >
-                        <ShoppingCart size={13} />
-                        Sale (-1)
-                      </button>
+                    {/* 5. Demand Velocity */}
+                    <td>
+                      <div className="velocity-cell-wrap">
+                        <div className={`velocity-badge ${isSurge ? 'surge' : ''}`}>
+                          {isSurge && <Flame size={13} className="surge-icon" />}
+                          <span>{p.demandVelocity || 0} orders</span>
+                        </div>
+                        <span className="cat-avg-text">
+                          Cat Avg: {item.categoryAvgVelocity ? item.categoryAvgVelocity.toFixed(1) : '2.0'} /24h
+                        </span>
+                      </div>
+                    </td>
 
-                      {/* Viral Surge Button */}
-                      <button
-                        className="action-icon-btn"
-                        style={{ color: 'var(--accent-purple)', borderColor: 'rgba(168, 85, 247, 0.3)' }}
-                        onClick={() => onSimulateSurge(p.id)}
-                        disabled={actionLoading === p.id}
-                        title="Simulate 5 orders surge (demonstrates demand spike trigger)"
-                      >
-                        <Flame size={13} />
-                        Surge (+5)
-                      </button>
+                    {/* 6. Lifecycle Status */}
+                    <td>
+                      {getStatusBadge(p.status)}
+                    </td>
 
-                      {/* Update Stock Button */}
-                      <button
-                        className="action-icon-btn"
-                        onClick={() => onOpenStockModal(p)}
-                        title="Manually adjust stock level"
-                      >
-                        <SlidersHorizontal size={13} />
-                        Stock
-                      </button>
+                    {/* 7. Agentic Action Controls */}
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="action-btn-row">
+                        {/* Simulate Sale (-1 Stock, +1 Velocity) */}
+                        <button
+                          className="action-icon-btn primary-sale"
+                          onClick={() => onSimulateSale(p.id)}
+                          disabled={actionLoading === p.id}
+                          title="Simulate 1 customer sale (decrements stock; fires agentic loop if stock < threshold)"
+                        >
+                          <ShoppingCart size={13} />
+                          <span>Sale (-1)</span>
+                        </button>
 
-                      {/* On-Demand AI Pricing */}
-                      <button
-                        className="action-icon-btn"
-                        onClick={() => onSuggestPricing(p.id)}
-                        disabled={actionLoading === p.id}
-                        title="Run on-demand pricing analysis"
-                      >
-                        <Sparkles size={13} />
-                        AI Price
-                      </button>
+                        {/* Viral Surge (+20 Velocity) */}
+                        <button
+                          className="action-icon-btn surge-btn"
+                          onClick={() => onSimulateSurge(p.id)}
+                          disabled={actionLoading === p.id}
+                          title="Simulate viral spike (surges velocity past 3x category average, triggers DEMAND_SPIKE)"
+                        >
+                          <Flame size={13} />
+                          <span>Surge (+20)</span>
+                        </button>
 
-                      {/* Stream AI Reasoning (Bonus SSE) */}
-                      <button
-                        className="action-icon-btn"
-                        style={{ color: 'var(--accent-cyan)', borderColor: 'rgba(6, 182, 212, 0.3)' }}
-                        onClick={() => onOpenStreamModal(p)}
-                        title="Stream live AI reasoning tokens via SSE (+5 pts bonus feature)"
-                      >
-                        <Radio size={13} />
-                        Stream
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                        {/* Real-time SSE Token Stream (Bonus +5 pts) */}
+                        <button
+                          className="action-icon-btn stream-btn"
+                          onClick={() => onOpenStreamModal(p)}
+                          title="Stream live AI reasoning tokens in real-time via Server-Sent Events"
+                        >
+                          <Sparkles size={13} />
+                          <span>⚡ Stream</span>
+                        </button>
+
+                        {/* Adjust Stock */}
+                        <button
+                          className="action-icon-btn adjust-btn"
+                          onClick={() => onOpenStockModal(p)}
+                          title="Manually adjust stock level"
+                        >
+                          <SlidersHorizontal size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* 4. Table Footer with Pagination / Status metadata */}
+      <div className="catalog-table-footer">
+        <span className="footer-count">
+          Showing <strong>{filteredProducts.length}</strong> of <strong>{totalCount}</strong> products in catalog
+        </span>
+        <span className="footer-legend">
+          Click <strong>Sale (-1)</strong> to watch the autonomous agentic loop fire when stock breaches threshold
+        </span>
       </div>
     </div>
   );

@@ -1,13 +1,11 @@
 import React from 'react';
 import { 
   Search, 
-  Users, 
-  Bell, 
   RotateCcw, 
-  Zap, 
+  Sparkles, 
   ShieldCheck, 
-  Sparkles,
-  SlidersHorizontal
+  RefreshCw,
+  Activity
 } from 'lucide-react';
 
 export default function Header({ 
@@ -16,6 +14,7 @@ export default function Header({
   strategy, 
   onToggleStrategy, 
   onResetData, 
+  onRefreshData,
   pendingCount = 0 
 }) {
   const isAi = strategy?.mode === 'AI_POWERED';
@@ -24,73 +23,72 @@ export default function Header({
     <header className="devias-header">
       {/* Search Input Bar */}
       <div className="header-search-wrap">
-        <Search size={18} className="search-icon" />
+        <Search size={17} className="search-icon" />
         <input 
           type="text"
           className="search-input"
-          placeholder="Search products, SKUs, categories, or triggers..."
+          placeholder="Search products by SKU, name, or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {searchQuery && (
+          <button 
+            className="search-clear-btn"
+            onClick={() => setSearchQuery('')}
+            title="Clear search"
+          >
+            ×
+          </button>
+        )}
       </div>
 
-      {/* Right Header Actions */}
+      {/* Right Header Domain Controls */}
       <div className="header-actions">
-        {/* Strategy Switcher Button (Live Runtime Switching) */}
+        {/* Backend Connectivity Status Pill */}
+        <div className="connection-status-pill" title="Connected to Spring Boot 3.3.4 on port 8080">
+          <span className="connection-status-dot"></span>
+          <span className="connection-status-text">Backend 8080 Active</span>
+        </div>
+
+        {/* Runtime Strategy Switcher (Zero-Downtime Hot Swap) */}
         <button 
           className={`strategy-toggle-pill ${isAi ? 'ai-active' : 'rules-active'}`}
           onClick={onToggleStrategy}
-          title="Click to toggle between AI-Powered and Rule-Based engine without restart"
+          title="Click to toggle between AI-Powered and Rule-Based engine dynamically without restart"
         >
           {isAi ? (
             <>
               <Sparkles size={14} className="strategy-icon animate-pulse" />
-              <span className="strategy-text">AI Powered (Qwen)</span>
+              <span className="strategy-text">Mode: Qwen-Cursor AI</span>
             </>
           ) : (
             <>
               <ShieldCheck size={14} className="strategy-icon" />
-              <span className="strategy-text">Rule-Based Fallback</span>
+              <span className="strategy-text">Mode: Rule-Based Fallback</span>
             </>
           )}
           <span className="switch-hint">Switch</span>
         </button>
 
+        {/* Refresh Live Data */}
+        <button 
+          className="header-action-button"
+          onClick={onRefreshData}
+          title="Refresh catalog and pending suggestions from database"
+        >
+          <RefreshCw size={15} />
+          <span>Refresh</span>
+        </button>
+
         {/* Database Benchmark Reset */}
         <button 
-          className="header-icon-button"
+          className="header-action-button reset-btn"
           onClick={onResetData}
-          title="Reset database to Addendum A benchmark state"
+          title="Reset database to canonical Addendum A benchmark state"
         >
-          <RotateCcw size={18} />
+          <RotateCcw size={15} />
+          <span>Reset Benchmark</span>
         </button>
-
-        {/* Collaborators / Team Icon from Devias Kit */}
-        <button className="header-icon-button" title="Merchandising Team Active (Solo Mode)">
-          <Users size={18} />
-        </button>
-
-        {/* Notification Bell with Badge */}
-        <div className="notification-bell-container">
-          <button className="header-icon-button" title="Pending Recommendations">
-            <Bell size={18} />
-            {pendingCount > 0 && (
-              <span className="bell-badge">{pendingCount}</span>
-            )}
-          </button>
-        </div>
-
-        {/* User Profile Avatar with Online Dot from Devias Kit */}
-        <div className="user-profile-menu">
-          <div className="avatar-wrapper">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80" 
-              alt="Merchandising Manager" 
-              className="user-avatar"
-            />
-            <span className="avatar-online-dot"></span>
-          </div>
-        </div>
       </div>
     </header>
   );

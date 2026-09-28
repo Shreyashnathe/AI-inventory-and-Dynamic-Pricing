@@ -1,15 +1,12 @@
 import React from 'react';
 import { 
-  BarChart3, 
+  LayoutDashboard, 
   Package, 
   CheckSquare, 
-  TrendingUp, 
-  Settings, 
-  ChevronDown, 
-  Sparkles, 
-  ShieldCheck,
+  Sliders, 
   Zap,
-  Layers
+  TrendingUp,
+  Cpu
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -19,43 +16,41 @@ export default function Sidebar({
   strategyMode = 'AI_POWERED'
 }) {
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'catalog', label: 'Catalog & Stock', icon: Package },
-    { id: 'approvals', label: 'Pending Approvals', icon: CheckSquare, badge: pendingCount },
-    { id: 'analytics', label: 'Sales & Trends', icon: TrendingUp },
-    { id: 'strategy', label: 'Strategy Engine', icon: Settings },
+    { id: 'overview', label: 'Overview & Console', icon: LayoutDashboard },
+    { id: 'catalog', label: 'Catalog & Inventory Health', icon: Package },
+    { id: 'approvals', label: 'Approval Queue', icon: CheckSquare, badge: pendingCount },
+    { id: 'strategy', label: 'Commerce Engine', icon: Cpu },
   ];
 
   return (
     <aside className="devias-sidebar">
-      {/* Brand & Workspace Switcher */}
+      {/* Brand Header */}
       <div className="sidebar-brand-section">
         <div className="brand-logo-container">
           <div className="brand-icon-logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="24" height="24" rx="6" fill="#6366F1" />
               <path d="M7 16L12 8L17 16H7Z" fill="white" />
             </svg>
           </div>
           <div className="brand-text-block">
-            <span className="brand-name">Devias Kit</span>
-            <span className="brand-sub">StockPulse Engine</span>
+            <span className="brand-name">StockPulse</span>
+            <span className="brand-sub">AI Commerce Advisor</span>
           </div>
         </div>
 
-        {/* Workspace selector widget from Devias Kit */}
+        {/* Store Context Pill */}
         <div className="workspace-pill">
           <div className="workspace-info">
-            <span className="workspace-title">ShopStream</span>
-            <span className="workspace-tier">Production</span>
+            <span className="workspace-title">ShopStream Catalog</span>
+            <span className="workspace-tier">Production · Addendum A</span>
           </div>
-          <ChevronDown size={16} className="workspace-chevron" />
         </div>
       </div>
 
-      {/* Navigation List */}
+      {/* Main Navigation */}
       <nav className="sidebar-nav">
-        <div className="nav-group-label">OPERATIONS</div>
+        <div className="nav-group-label">MERCHANDISING CONSOLE</div>
         <ul className="nav-list">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -78,19 +73,19 @@ export default function Sidebar({
         </ul>
       </nav>
 
-      {/* Engine Status Card */}
+      {/* Reactive Loop Engine Status */}
       <div className="sidebar-footer">
         <div className="engine-status-card">
           <div className="engine-status-head">
             <span className="engine-status-dot"></span>
-            <span className="engine-status-title">Agentic Loop Active</span>
+            <span className="engine-status-title">Agentic Loop Online</span>
           </div>
           <p className="engine-status-desc">
-            Autonomous reactivity listening on inventory signals &amp; sales velocity.
+            Observes stock drops &amp; demand spikes. Auto-queues pricing &amp; reorders for approval.
           </p>
           <div className="engine-mode-tag">
             <Zap size={12} className="tag-icon" />
-            <span>Mode: {strategyMode === 'AI_POWERED' ? 'Qwen-Cursor AI' : 'Deterministic Rules'}</span>
+            <span>LLM: {strategyMode === 'AI_POWERED' ? 'Qwen-Cursor Active' : 'Rule-Based Active'}</span>
           </div>
         </div>
       </div>

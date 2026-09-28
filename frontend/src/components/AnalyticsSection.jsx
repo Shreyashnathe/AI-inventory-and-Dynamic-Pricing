@@ -1,29 +1,39 @@
 import React, { useState } from 'react';
 import { 
   RotateCw, 
-  Monitor, 
-  Tablet, 
-  Smartphone,
+  CheckCircle2, 
+  AlertTriangle, 
+  XCircle,
   TrendingUp,
   Layers
 } from 'lucide-react';
 
-export default function AnalyticsSection({ onSync }) {
+export default function AnalyticsSection({ products = [], onSync }) {
   const [syncing, setSyncing] = useState(false);
 
   const handleSyncClick = () => {
     setSyncing(true);
     if (onSync) onSync();
-    setTimeout(() => setSyncing(false), 800);
+    setTimeout(() => setSyncing(false), 600);
   };
 
-  // 12-month data matching the Devias Kit screenshot
+  // Compute real-time stock health distribution from actual products
+  const total = products.length || 8;
+  const outOfStock = products.filter(p => (p.stockLevel || 0) === 0).length;
+  const lowStock = products.filter(p => (p.stockLevel || 0) > 0 && (p.stockLevel || 0) < (p.reorderThreshold || 0)).length;
+  const healthy = total - outOfStock - lowStock;
+
+  const healthyPct = Math.round((healthy / total) * 100);
+  const lowPct = Math.round((lowStock / total) * 100);
+  const outPct = 100 - healthyPct - lowPct;
+
+  // 12-month benchmark sales & velocity data
   const monthlyData = [
     { month: 'Jan', valA: 85, valB: 50 },
     { month: 'Feb', valA: 72, valB: 58 },
-    { month: 'Mar', valA: 25, valB: 20 },
-    { month: 'Apr', valA: 40, valB: 30 },
-    { month: 'May', valA: 15, valB: 10 },
+    { month: 'Mar', valA: 35, valB: 25 },
+    { month: 'Apr', valA: 45, valB: 32 },
+    { month: 'May', valA: 20, valB: 15 },
     { month: 'Jun', valA: 65, valB: 42 },
     { month: 'Jul', valA: 65, valB: 35 },
     { month: 'Aug', valA: 74, valB: 55 },
@@ -35,27 +45,26 @@ export default function AnalyticsSection({ onSync }) {
 
   return (
     <div className="devias-analytics-grid">
-      {/* 1. SALES DUAL-BAR CHART (Matches left wide card in Devias Kit) */}
+      {/* 1. SALES & DEMAND VELOCITY DUAL-BAR CHART */}
       <div className="devias-chart-card sales-chart-card">
         <div className="chart-card-header">
           <div className="chart-title-wrap">
-            <h4 className="chart-card-title">Sales</h4>
-            <span className="chart-card-subtitle">Revenue volume &amp; dynamic pricing velocity</span>
+            <h4 className="chart-card-title">Sales &amp; Demand Velocity</h4>
+            <span className="chart-card-subtitle">Dynamic pricing revenue vs baseline volume</span>
           </div>
           <button 
             className="chart-sync-btn"
             onClick={handleSyncClick}
             disabled={syncing}
-            title="Synchronize real-time sales signals"
+            title="Synchronize signals with backend database"
           >
-            <RotateCw size={14} className={`sync-icon ${syncing ? 'animate-spin' : ''}`} />
+            <RotateCw size={13} className={`sync-icon ${syncing ? 'animate-spin' : ''}`} />
             <span>Sync</span>
           </button>
         </div>
 
-        {/* Bar Chart Area */}
+        {/* Bar Chart Body */}
         <div className="bar-chart-body">
-          {/* Y-axis labels */}
           <div className="y-axis-labels">
             <span>20K</span>
             <span>15K</span>
@@ -64,31 +73,26 @@ export default function AnalyticsSection({ onSync }) {
             <span>0</span>
           </div>
 
-          {/* Chart Columns */}
           <div className="bar-chart-plot">
-            {/* Grid lines */}
             <div className="grid-line" style={{ bottom: '100%' }}></div>
             <div className="grid-line" style={{ bottom: '75%' }}></div>
             <div className="grid-line" style={{ bottom: '50%' }}></div>
             <div className="grid-line" style={{ bottom: '25%' }}></div>
             <div className="grid-line" style={{ bottom: '0%' }}></div>
 
-            {/* Monthly Columns */}
             <div className="bars-container">
               {monthlyData.map((item, idx) => (
                 <div key={idx} className="month-column">
                   <div className="bars-pair">
-                    {/* Primary Bar (Indigo) */}
                     <div 
                       className="chart-bar bar-primary" 
                       style={{ height: `${item.valA}%` }}
-                      title={`${item.month} Dynamic Sales: $${(item.valA * 210).toLocaleString()}`}
+                      title={`${item.month} Revenue: $${(item.valA * 220).toLocaleString()}`}
                     ></div>
-                    {/* Secondary Bar (Lavender) */}
                     <div 
                       className="chart-bar bar-secondary" 
                       style={{ height: `${item.valB}%` }}
-                      title={`${item.month} Baseline Volume: $${(item.valB * 210).toLocaleString()}`}
+                      title={`${item.month} Baseline: $${(item.valB * 220).toLocaleString()}`}
                     ></div>
                   </div>
                   <span className="month-label">{item.month}</span>
@@ -99,76 +103,73 @@ export default function AnalyticsSection({ onSync }) {
         </div>
       </div>
 
-      {/* 2. TRAFFIC SOURCE DONUT CHART (Matches right square card in Devias Kit) */}
+      {/* 2. STOCK HEALTH COMPOSITION DONUT CHART */}
       <div className="devias-chart-card traffic-chart-card">
         <div className="chart-card-header">
           <div className="chart-title-wrap">
-            <h4 className="chart-card-title">Traffic Source</h4>
-            <span className="chart-card-subtitle">Channel attribution for orders</span>
+            <h4 className="chart-card-title">Stock Health Composition</h4>
+            <span className="chart-card-subtitle">Real-time inventory levels vs thresholds</span>
           </div>
         </div>
 
-        {/* Donut Chart SVG */}
         <div className="donut-chart-body">
           <div className="donut-svg-wrapper">
             <svg viewBox="0 0 160 160" className="donut-svg">
-              {/* Desktop Segment - Indigo (63%) */}
-              <circle
-                cx="80"
-                cy="80"
-                r="60"
-                fill="none"
-                stroke="#6366F1"
-                strokeWidth="24"
-                strokeDasharray="237.5 377"
-                strokeDashoffset="0"
-                transform="rotate(-90 80 80)"
-              />
-              {/* Tablet Segment - Green (15%) */}
+              {/* Healthy Segment - Green */}
               <circle
                 cx="80"
                 cy="80"
                 r="60"
                 fill="none"
                 stroke="#10B981"
-                strokeWidth="24"
-                strokeDasharray="56.5 377"
-                strokeDashoffset="-237.5"
+                strokeWidth="22"
+                strokeDasharray={`${(healthyPct / 100) * 377} 377`}
+                strokeDashoffset="0"
                 transform="rotate(-90 80 80)"
               />
-              {/* Phone Segment - Orange (22%) */}
+              {/* Low Stock Segment - Amber */}
               <circle
                 cx="80"
                 cy="80"
                 r="60"
                 fill="none"
                 stroke="#F79009"
-                strokeWidth="24"
-                strokeDasharray="83 377"
-                strokeDashoffset="-294"
+                strokeWidth="22"
+                strokeDasharray={`${(lowPct / 100) * 377} 377`}
+                strokeDashoffset={`-${(healthyPct / 100) * 377}`}
                 transform="rotate(-90 80 80)"
               />
-              {/* Inner cutout hole */}
+              {/* Out of Stock Segment - Red */}
+              <circle
+                cx="80"
+                cy="80"
+                r="60"
+                fill="none"
+                stroke="#F04438"
+                strokeWidth="22"
+                strokeDasharray={`${(outPct / 100) * 377} 377`}
+                strokeDashoffset={`-${((healthyPct + lowPct) / 100) * 377}`}
+                transform="rotate(-90 80 80)"
+              />
               <circle cx="80" cy="80" r="48" fill="#ffffff" />
             </svg>
           </div>
 
-          {/* Donut Legend */}
           <div className="donut-legend-grid">
             <div className="legend-item">
-              <Monitor size={18} className="legend-icon text-indigo" />
-              <span className="legend-name">Desktop</span>
-              <span className="legend-pct">63%</span>
+              <CheckCircle2 size={16} className="legend-icon text-green" />
+              <span className="legend-name">Healthy</span>
+              <span className="legend-pct">{healthy} SKUs</span>
             </div>
             <div className="legend-item">
-              <Tablet size={18} className="legend-icon text-orange" />
-              <span className="legend-name">Tablet</span>
-              <span className="legend-pct">15%</span>
+              <AlertTriangle size={16} className="legend-icon text-orange" />
+              <span className="legend-name">Low Alert</span>
+              <span className="legend-pct">{lowStock} SKU</span>
             </div>
             <div className="legend-item">
-              <Smartphone size={18} className="legend-icon text-green" />
-              <span className="legend-name">Phone</span>
-              <span className="legend-pct">22%</span>
+              <XCircle size={16} className="legend-icon text-red" />
+              <span className="legend-name">Out of Stock</span>
+              <span className="legend-pct">{outOfStock} SKU</span>
             </div>
           </div>
         </div>

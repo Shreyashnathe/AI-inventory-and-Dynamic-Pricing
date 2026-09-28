@@ -265,6 +265,7 @@ export default function App() {
           strategy={strategy}
           onToggleStrategy={handleToggleStrategy}
           onResetData={handleResetData}
+          onRefreshData={() => fetchData(false)}
           pendingCount={pendingTotal}
         />
 
@@ -278,9 +279,12 @@ export default function App() {
             />
           )}
 
-          {/* Analytics Visualizations (Sales Bar Chart & Traffic Donut) */}
+          {/* Analytics Visualizations (Sales Bar Chart & Stock Health Donut) */}
           {(activeTab === 'overview' || activeTab === 'analytics') && (
-            <AnalyticsSection onSync={() => fetchData(true)} />
+            <AnalyticsSection 
+              products={rawProductList}
+              onSync={() => fetchData(true)} 
+            />
           )}
 
           {/* Approval Queue (Action Center) */}
