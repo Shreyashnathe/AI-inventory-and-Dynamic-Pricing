@@ -1,0 +1,34 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Java & Maven
+**/target/
+**/.flattened-pom.xml
+**/mvnw
+!**/mvnw.cmd
+**/.mvn/wrapper/maven-wrapper.jar
+
+# IDE specific
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+*.settings/
+
+# Node & Frontend
+**/node_modules/
+**/dist/
+**/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Credentials
+.env
+.env.local
+*.log
+
+# Temp files
+setup_env.ps1
