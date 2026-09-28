@@ -17,6 +17,8 @@ export default function App() {
   const [reorderSuggestions, setReorderSuggestions] = useState([]);
   const [strategy, setStrategy] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isBackendOnline, setIsBackendOnline] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -38,15 +40,22 @@ export default function App() {
         fetch('/api/strategy')
       ]);
 
-      if (prodRes.ok) setProducts(await prodRes.json());
+      if (prodRes.ok) {
+        setProducts(await prodRes.json());
+        setIsBackendOnline(true);
+      } else {
+        setIsBackendOnline(false);
+      }
       if (priceRes.ok) setPricingSuggestions(await priceRes.json());
       if (reorderRes.ok) setReorderSuggestions(await reorderRes.json());
       if (stratRes.ok) setStrategy(await stratRes.json());
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      if (!isSilent) showToast('Could not connect to backend engine on port 8080.', 'error');
+      setIsBackendOnline(false);
+      if (!isSilent) showToast('Could not connect to Spring Boot backend on port 8080.', 'error');
     } finally {
       if (!isSilent) setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -59,9 +68,17 @@ export default function App() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // Manual refresh trigger
+  const handleRefreshData = () => {
+    setRefreshing(true);
+    fetchData(false);
+    showToast('Refreshing catalog and suggestion data...', 'info');
+  };
+
   // Switch strategy runtime
   const handleToggleStrategy = async () => {
-    const nextMode = strategy?.mode === 'AI_POWERED' ? 'RULE_BASED' : 'AI_POWERED';
+    const currentMode = strategy?.mode || 'AI_POWERED';
+    const nextMode = currentMode === 'AI_POWERED' ? 'RULE_BASED' : 'AI_POWERED';
     try {
       const res = await fetch('/api/strategy', {
         method: 'POST',
@@ -71,10 +88,14 @@ export default function App() {
       if (res.ok) {
         const updated = await res.json();
         setStrategy(updated);
+        setIsBackendOnline(true);
         showToast(`Strategy switched to ${updated.mode} (Zero-downtime hot swap)!`, 'success');
+      } else {
+        showToast(`Server returned ${res.status} while switching strategy.`, 'error');
       }
     } catch (err) {
-      showToast('Failed to switch strategy mode', 'error');
+      setIsBackendOnline(false);
+      showToast('Backend offline: Could not reach port 8080 to switch strategy.', 'error');
     }
   };
 
@@ -83,11 +104,15 @@ export default function App() {
     try {
       const res = await fetch('/api/admin/reset-data', { method: 'POST' });
       if (res.ok) {
+        setIsBackendOnline(true);
         showToast('Database reset to canonical Addendum A benchmark state!', 'success');
-        fetchData();
+        fetchData(false);
+      } else {
+        showToast(`Failed to reset database (Status ${res.status})`, 'error');
       }
     } catch (err) {
-      showToast('Failed to reset database', 'error');
+      setIsBackendOnline(false);
+      showToast('Backend offline: Could not connect to port 8080 to reset benchmark.', 'error');
     }
   };
 
@@ -265,9 +290,24 @@ export default function App() {
           strategy={strategy}
           onToggleStrategy={handleToggleStrategy}
           onResetData={handleResetData}
-          onRefreshData={() => fetchData(false)}
+          onRefreshData={handleRefreshData}
+          isBackendOnline={isBackendOnline}
+          refreshing={refreshing}
           pendingCount={pendingTotal}
         />
+
+        {/* Backend Offline Warning Banner */}
+        {!isBackendOnline && (
+          <div className="backend-offline-banner animate-fade-in">
+            <div className="offline-banner-content">
+              <span className="offline-badge">⚠️ Backend Offline</span>
+              <span>Spring Boot server is not responding on <strong>port 8080</strong>. Run <code>.\mvnw.cmd spring-boot:run</code> in the <code>backend</code> directory to connect.</span>
+            </div>
+            <button type="button" className="offline-retry-btn" onClick={handleRefreshData}>
+              Retry Connection
+            </button>
+          </div>
+        )}
 
         {/* Content Body */}
         <main className="devias-content-body">
