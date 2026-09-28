@@ -27,6 +27,9 @@ yarn-error.log*
 
 # Environment & Credentials
 .env
+.env.*
+*.env
+!.env.example
 .env.local
 *.log
 

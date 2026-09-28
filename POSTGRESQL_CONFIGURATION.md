@@ -8,17 +8,18 @@ The application is configured to use PostgreSQL with the following settings:
 
 - **Database Name**: `StockPulse`
 - **Username**: `postgres`
-- **Password**: `Shreyash@2005`
+- **Password**: Configured via `DB_PASSWORD` in `.env`
 - **Host**: `localhost`
 - **Port**: `5432`
 
-These settings are configured in `src/main/resources/application.properties`.
+These settings are configured in `.env` (or `application.properties`).
 
 ## Prerequisites
 
 1. **PostgreSQL Server** must be installed and running on your system
 2. **Database Creation**: The `StockPulse` database must exist
 3. **User Permissions**: The `postgres` user must have access to the database
+4. **Environment File**: Copy `.env.example` to `.env` and set your `DB_PASSWORD`
 
 ## Setting Up PostgreSQL
 
@@ -36,7 +37,7 @@ CREATE DATABASE "StockPulse";
 ```
 
 ### 3. Verify Credentials
-Ensure the `postgres` user exists with the password `Shreyash@2005`, or update the application.properties file with your actual credentials.
+Ensure the `postgres` user password matches your `DB_PASSWORD` set in `.env`.
 
 ## Running the Application
 

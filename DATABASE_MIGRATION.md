@@ -26,10 +26,10 @@ spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 ### New Configuration (PostgreSQL)
 ```properties
 # PostgreSQL Database Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/StockPulse
+spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/StockPulse}
 spring.datasource.driverClassName=org.postgresql.Driver
-spring.datasource.username=postgres
-spring.datasource.password=Shreyash@2005
+spring.datasource.username=${DB_USERNAME:postgres}
+spring.datasource.password=${DB_PASSWORD}
 spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
 

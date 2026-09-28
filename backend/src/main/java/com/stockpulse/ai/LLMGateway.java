@@ -27,7 +27,7 @@ public class LLMGateway {
     @Value("${llm.base-url:https://litellm-qc.zycus.net/v1/chat/completions}")
     private String baseUrl;
 
-    @Value("${llm.api-key:sk-SfyNGxhcv7RnQKbZFWX2LQ}")
+    @Value("${llm.api-key:}")
     private String apiKey;
 
     @Value("${llm.model:qwen-cursor}")
@@ -36,7 +36,7 @@ public class LLMGateway {
     @Value("${llm.product:PC1}")
     private String product;
 
-    @Value("${llm.cookie:6bf6da0e46dc446bd58693d49c303e18=f3f865650f0f8f3b30731936b2eb5857}")
+    @Value("${llm.cookie:}")
     private String cookie;
 
     @Value("${llm.timeout-seconds:25}")
