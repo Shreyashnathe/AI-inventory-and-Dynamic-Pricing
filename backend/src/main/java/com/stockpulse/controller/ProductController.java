@@ -14,7 +14,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping({"/api/products", "/products"})
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class ProductController {
 
     private final ProductService productService;

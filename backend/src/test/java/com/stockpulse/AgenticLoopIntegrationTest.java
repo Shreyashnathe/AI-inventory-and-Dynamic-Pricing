@@ -41,8 +41,12 @@ public class AgenticLoopIntegrationTest {
     @Autowired
     private StrategyRegistry strategyRegistry;
 
+    @Autowired
+    private com.stockpulse.service.DataInitializer dataInitializer;
+
     @BeforeEach
     void setUp() {
+        dataInitializer.resetDatabase();
         // Enforce RULE_BASED for deterministic integration testing without external network calls
         strategyRegistry.setMode(StrategyMode.RULE_BASED);
     }

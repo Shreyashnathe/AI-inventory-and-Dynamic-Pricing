@@ -2,6 +2,7 @@ package com.stockpulse.controller;
 
 import com.stockpulse.service.DataInitializer;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,7 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping({"/api/admin", "/admin"})
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class AdminController {
 
     private final DataInitializer dataInitializer;

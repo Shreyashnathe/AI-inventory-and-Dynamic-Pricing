@@ -7,7 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/strategy")
+@RequestMapping({"/api/strategy", "/strategy"})
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class StrategyController {
 
     private final StrategyRegistry strategyRegistry;
@@ -26,12 +27,12 @@ public class StrategyController {
     }
 
     /**
-     * POST /api/strategy
+     * POST /api/strategy or PATCH /api/strategy
      * Switch active commerce strategy at runtime without server restart.
      */
-    @PostMapping
+    @RequestMapping(method = {RequestMethod.POST, RequestMethod.PATCH})
     public ResponseEntity<StrategyConfigDto> switchStrategy(@RequestBody StrategyConfigDto request) {
-        if (request.getMode() != null) {
+        if (request != null && request.getMode() != null) {
             strategyRegistry.setMode(request.getMode());
         }
         return ResponseEntity.ok(strategyRegistry.getConfig());
